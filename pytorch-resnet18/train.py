@@ -79,9 +79,8 @@ def train_model(model, criterion, optimizer, scheduler, num_epochs=5):
 
             epoch_loss = running_loss / dataset_sizes[phase]
             epoch_acc = running_corrects / dataset_sizes[phase]
-
-            print('{} Loss: {:.4f} Acc: {:.4f}'.format(
-                phase, epoch_loss, epoch_acc))
+            last_lr = scheduler.get_last_lr()[0]
+            print('{} Loss: {:.4f} Acc: {:.4f} Last Lr: {}'.format(phase, epoch_loss, epoch_acc, last_lr))
 
             # deep copy the model
             if phase == 'valid' and epoch_acc > best_acc:
@@ -110,8 +109,9 @@ if torch.cuda.is_available():
 # Loss and Optimizer
 learning_rate = 0.001
 criterion = nn.CrossEntropyLoss()
-optimizer_ft = optim.SGD(model_ft.parameters(), lr=0.001, momentum=0.9)
-exp_lr_scheduler = lr_scheduler.StepLR(optimizer_ft, step_size=7, gamma=0.1)
+optimizer_ft = optim.SGD(model_ft.parameters(), lr=learning_rate, momentum=0.9)
+# 共有2000张训练图片，每个批次64张图片，需要训练32次，如果step_size设置的太小，学习率很快变得接近0，后面就无法训练了。如果想训练多轮的话，gamma可以设置大一些，不然也能很快变成0
+exp_lr_scheduler = lr_scheduler.StepLR(optimizer_ft, step_size=32, gamma=0.1)  
 
 # Train Model
-best_model_ft = train_model(model_ft, criterion, optimizer_ft, exp_lr_scheduler, num_epochs=2)
+best_model_ft = train_model(model_ft, criterion, optimizer_ft, exp_lr_scheduler, num_epochs=20)
